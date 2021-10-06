@@ -1,4 +1,4 @@
-import networkx
+import networkx as nx
 import pandas as pd
 import os
 import json
@@ -16,8 +16,11 @@ print(r"伝送遅延$d_{i,j}^{\mathrm{link}}$", nx.get_edge_attributes(physical_
 print(r"処理容量$P_i$", nx.get_node_attributes(physical_network, "capacity"))
 print(r"帯域幅$B_{i,j}$", nx.get_edge_attributes(physical_network, "bandwidth"))
 
+fig = plt.figure()
+ax  = fig.add_subplot(111)
 pos = {n: (physical_network.nodes()[n]["lng"], physical_network.nodes()[n]["lat"]) for n in physical_network.nodes()}
-nx.draw_networkx(physical_network, pos=pos)
+nx.draw_networkx(physical_network, pos=pos, ax=ax)
+plt.savefig("fig/physical_network.pdf")
 
 filename = os.path.join(path, "service_chain_requirements.json")
 with open(filename) as f:
@@ -53,10 +56,13 @@ print(imaginary_nodes)
 augmented_network = physical_network.copy()
 for func, node in imaginary_nodes.items():
   augmented_network.add_node(node, lng=-(func+1)*8 - 70, lat=60, delay=0)
-imaginary_links.apply(lambda x: augmented_network.add_edge(x.physical_node, imaginary_nodes[x.function], delay=0), axis=1)
-imaginary_links.apply(lambda x: augmented_network.add_edge(imaginary_nodes[x.function], x.physical_node, delay=x.delay * 1e-3), axis=1) # d_{i,j}^{func}
+virtual_links.apply(lambda x: augmented_network.add_edge(x.physical_node, imaginary_nodes[x.function], delay=0), axis=1)
+virtual_links.apply(lambda x: augmented_network.add_edge(imaginary_nodes[x.function], x.physical_node, delay=x.delay * 1e-3), axis=1) # d_{i,j}^{func}
 print("拡張ネットワークのノード集合", augmented_network.nodes())
 print("拡張ネットワークのリンク集合", augmented_network.edges())
 
+fig = plt.figure()
+ax  = fig.add_subplot(111)
 pos = {n: (augmented_network.nodes()[n]["lng"], augmented_network.nodes()[n]["lat"]) for n in augmented_network.nodes()}
-nx.draw_networkx(augmented_network, pos=pos)
+nx.draw_networkx(augmented_network, pos=pos, ax=ax)
+plt.savefig("fig/augmented_network.pdf")
